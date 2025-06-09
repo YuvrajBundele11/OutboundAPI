@@ -61,7 +61,7 @@ app.post('/accounts', async(req, res) => {
 
 // INSERT via GET with URL query parameters
 app.get('/insertAccount', async(req, res) => {
-    const { accountName, accountEmail, phone, sfAccountId } = req.query;
+    const { accountName, accountEmail, phone, sfAccountId } = req.body;
 
     if (!accountName || !accountEmail || !phone) {
         return res.status(400).send('Missing required fields');
@@ -70,12 +70,22 @@ app.get('/insertAccount', async(req, res) => {
     const accountDocument = {
         accountName,
         accountEmail,
-        phone,
-        ...(sfAccountId && { sfAccountId }) // optional Salesforce Id
+        phone
     };
 
-    const result = await accounts.insertOne(accountDocument);
-    res.send(`Inserted account with ID: ${result.insertedId}`);
+    try {
+        const result = await accounts.insertOne(accountDocument);
+        const insertedId = result.insertedId;
+
+        if (sfAccountId) {
+            await accounts.updateOne({ _id: insertedId }, { $set: { sfAccountId } });
+        }
+
+        res.send(`Inserted account with ID: ${insertedId}`);
+    } catch (error) {
+        console.error('Error inserting account:', error);
+        res.status(500).send('Server error while inserting account');
+    }
 });
 
 // PUT update account by MongoDB _id
