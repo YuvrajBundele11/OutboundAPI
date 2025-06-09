@@ -61,7 +61,7 @@ app.post('/accounts', async(req, res) => {
 
 // INSERT via GET with URL query parameters
 app.get('/insertAccount', async(req, res) => {
-    const { accountName, accountEmail, phone, sfAccountId } = req.query;
+    const { accountName, accountEmail, phone, sfAccountId } = req.body;
 
     if (!accountName || !accountEmail || !phone) {
         return res.status(400).send('Missing required fields');
@@ -74,11 +74,9 @@ app.get('/insertAccount', async(req, res) => {
     };
 
     try {
-        // Insert the document
         const result = await accounts.insertOne(accountDocument);
         const insertedId = result.insertedId;
 
-        // If sfAccountId is provided, update the document
         if (sfAccountId) {
             await accounts.updateOne({ _id: insertedId }, { $set: { sfAccountId } });
         }
