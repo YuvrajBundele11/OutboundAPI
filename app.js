@@ -63,24 +63,30 @@ app.post('/accounts', async(req, res) => {
 app.get('/insertAccount', async(req, res) => {
     const { accountName, accountEmail, phone, sfAccountId } = req.query;
 
-    // Now sfAccountId is also required
-    if (!accountName || !accountEmail || !phone || !sfAccountId) {
+    if (!accountName || !accountEmail || !phone) {
         return res.status(400).send('Missing required fields');
     }
 
     const accountDocument = {
         accountName,
         accountEmail,
-        phone,
-        sfAccountId // always included now
+        phone
     };
 
     try {
+        // Insert the document
         const result = await accounts.insertOne(accountDocument);
-        res.send(`Inserted account with ID: ${result.insertedId}`);
+        const insertedId = result.insertedId;
+
+        // If sfAccountId is provided, update the document
+        if (sfAccountId) {
+            await accounts.updateOne({ _id: insertedId }, { $set: { sfAccountId } });
+        }
+
+        res.send(`Inserted account with ID: ${insertedId}`);
     } catch (error) {
-        console.error('Insert failed:', error);
-        res.status(500).send('Failed to insert account');
+        console.error('Error inserting account:', error);
+        res.status(500).send('Server error while inserting account');
     }
 });
 
