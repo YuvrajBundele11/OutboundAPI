@@ -63,7 +63,8 @@ app.post('/accounts', async(req, res) => {
 app.get('/insertAccount', async(req, res) => {
     const { accountName, accountEmail, phone, sfAccountId } = req.query;
 
-    if (!accountName || !accountEmail || !phone) {
+    // Now sfAccountId is also required
+    if (!accountName || !accountEmail || !phone || !sfAccountId) {
         return res.status(400).send('Missing required fields');
     }
 
@@ -71,11 +72,16 @@ app.get('/insertAccount', async(req, res) => {
         accountName,
         accountEmail,
         phone,
-        ...(sfAccountId && { sfAccountId }) // optional Salesforce Id
+        sfAccountId // always included now
     };
 
-    const result = await accounts.insertOne(accountDocument);
-    res.send(`Inserted account with ID: ${result.insertedId}`);
+    try {
+        const result = await accounts.insertOne(accountDocument);
+        res.send(`Inserted account with ID: ${result.insertedId}`);
+    } catch (error) {
+        console.error('Insert failed:', error);
+        res.status(500).send('Failed to insert account');
+    }
 });
 
 // PUT update account by MongoDB _id
