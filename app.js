@@ -70,14 +70,9 @@ app.get('/insertAccount', async(req, res) => {
     const accountDocument = {
         accountName,
         accountEmail,
-        phone
+        phone,
+        ...(sfAccountId && { sfAccountId }) // optional Salesforce Id
     };
-
-    if (sfAccountId) {
-        accountDocument.sfAccountId = sfAccountId;
-    }
-
-    console.log("Inserting account:", accountDocument);
 
     const result = await accounts.insertOne(accountDocument);
     res.send(`Inserted account with ID: ${result.insertedId}`);
